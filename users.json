@@ -1,18 +1,42 @@
 {
   "admin": {
-    "password_hash": "$2b$12$x86hLzdRjlmKoX8gevqMyeuQL/ZApY44xiTeyBg4eTglnPOCoDpt2",
+    "password_hash": "$2b$12$y2OdScsW/vd75.qYmBiw8OKvi5AXHB5wohdldfNC6iCoCCz2xNfby",
     "role": "admin",
-    "security_question": "What was the name of your first pet?",
-    "security_answer_hash": "$2b$12$2fhC50y//dNhHBNeMs96guYIvXRZWSElnqiBl1wmaiao2fPvn1IY."
+    "security": [
+      {
+        "question": "What was the name of your first pet?",
+        "answer_hash": "$2b$12$jwTJ7WqNafGXmZ8lge5G7e0AU8kr/HMnZvhB6gvBPvQXMCfHfOwfq"
+      },
+      {
+        "question": "What city were you born in?",
+        "answer_hash": "$2b$12$ygimlbng2n/8OMlSGdUX1OdJJt99eXixGyqONFYqQ.VrDHZMO0P3a"
+      },
+      {
+        "question": "What is your mother's maiden name?",
+        "answer_hash": "$2b$12$s2iu/kRL6pXS1ALrk3DT8O4x1qkPt2BjkRUKEpaQYWZb4q44zKmKi"
+      }
+    ]
   },
-  "user": {
-    "password_hash": "$2b$12$XT4UZVvZ9Y2wouaRKoHxk.FZNcFLr2YahI3F1Pr1kE.xKjHjrp1x6",
+  "user2": {
+    "password_hash": "$2b$12$BgVtPhscIU07QlWw5/29I.vHaaA97Sj46julD4gt9VQmaNC7lxy3K",
     "role": "viewer",
-    "security_question": null,
-    "security_answer_hash": null
+    "security": [
+      {
+        "question": "What was the name of your first pet?",
+        "answer_hash": "$2b$12$n7RlYWaQBJjqvZiSTu3lrODRH2sRfH81XIrtpvpPpvO851Gvk8Ciu"
+      },
+      {
+        "question": "What city were you born in?",
+        "answer_hash": "$2b$12$x6fk4MxLHfgUoMfytJok2O9793utZig1b4MRQ3CKFHqGkbIpk7zRS"
+      },
+      {
+        "question": "What is your mother's maiden name?",
+        "answer_hash": "$2b$12$bMhe4nTqXVI96E0jGkTogeSPVBJ2Mi2.7HGmrxD81Wc2qgjB0I9h."
+      }
+    ]
   },
   "superadmin": {
-    "password_hash": "$2b$12$1E9oG2M38dso1zeqxQW0e.qzu0p7eRHsN/qiTdWlN6VoF1Bs35Qvu",
+    "password_hash": "$2b$12$Hwa57OkC4xd7x4fjVCdSb.MfVCpnMfSy84kAnKJnCVx9WastOu31y",
     "role": "admin",
     "security": []
   }
