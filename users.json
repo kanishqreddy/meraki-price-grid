@@ -16,5 +16,10 @@
         "answer_hash": "$2b$12$s2iu/kRL6pXS1ALrk3DT8O4x1qkPt2BjkRUKEpaQYWZb4q44zKmKi"
       }
     ]
+  },
+  "user": {
+    "password_hash": "$2b$12$BgVtPhscIU07QlWw5/29I.vHaaA97Sj46julD4gt9VQmaNC7lxy3K",
+    "role": "viewer",
+    "security": []
   }
 }
