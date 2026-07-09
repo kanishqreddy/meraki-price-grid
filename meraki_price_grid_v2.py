@@ -1,54 +1,52 @@
 """
-meraki_price_grid_v5.py
+meraki_price_grid_v4.py
 ========================
-Meraki Price Grid v5 -- final client-ready version.
-
-Changes from v4:
-- Switched to a clean, professional LIGHT theme (white background, navy/slate
-  text, a single muted indigo accent) instead of the dark teal/black theme.
-- Admin permissions hardened and made fully explicit:
-    * Create user (viewer or admin)
-    * Delete user (any user except themself)
-    * Promote/demote role (viewer <-> admin)
-    * Rename username
-    * Reset password
-    * Safeguard: the LAST remaining admin account cannot be deleted or
-      demoted, so the system can never end up with zero admins.
-    * Delete now requires typing the username to confirm (prevents
-      accidental clicks from wiping an account).
-- Bug fixes:
-    * Price column selection no longer breaks if both GST columns are
-      fully empty.
-    * Discount %/Avg Discount metric now handles an all-NaN or empty
-      "on sale" subset safely.
-    * Cross-source SKU match table no longer errors when only one
-      source is present in the current filter.
-    * Security-question setup no longer lets a user pick the same
-      question twice.
-    * "My Account" self-service section clears verification state on
-      logout so the next user isn't auto-verified.
-    * Persistent storage (GitHub) failures now show a clear one-time
-      warning instead of silently failing.
-
-Usage:
-    streamlit run meraki_price_grid_v5.py
-
-Requires (same folder):
-    buymeraki_all_categories_enriched.csv
-    dragon_networks_products.csv
+Meraki Price Grid v4 — professional analytics dashboard with:
+- Persistent authentication (stored in GitHub via API so accounts survive
+  Streamlit Cloud restarts/redeploys — see SETUP NOTES below)
+- 3 security questions per user for password reset
+- Self-service "My Account" panel: any user can update their OWN username
+  and password after re-verifying their 3 security answers
+- Admin panel: create/delete users, change role, reset password, rename
+- Extra filters: Brand, Manufacturer, Availability, sort options
+- Polished, formal dashboard visuals with KPI highlights and discount table
 
 ============================================================
-PERSISTENT USER STORAGE (Streamlit Cloud secrets)
+SETUP NOTES — READ BEFORE DEPLOYING
 ============================================================
-Streamlit Community Cloud wipes local files on every restart. To keep
-user accounts permanently, add these to your app's Secrets:
+Streamlit Community Cloud's filesystem is EPHEMERAL: any file your app
+writes (like users.json) is WIPED whenever the app restarts, sleeps, or
+redeploys. That means new users created through the Admin panel would
+be lost on the next restart unless we store them somewhere permanent.
+
+This version stores users.json inside your own GitHub repo using the
+GitHub Contents API, so it persists exactly like your code and CSVs do.
+
+To enable this, add the following to your Streamlit Cloud app's
+"Secrets" (App settings -> Secrets):
 
     GITHUB_TOKEN = "ghp_yourPersonalAccessTokenHere"
     GITHUB_REPO = "yourusername/meraki-price-grid"
     GITHUB_USERS_PATH = "users.json"
 
-Without this, accounts are stored locally and will reset on restart.
+How to get a GitHub token:
+1. GitHub -> Settings -> Developer settings -> Personal access tokens
+   -> Tokens (classic) -> Generate new token.
+2. Give it "repo" scope (so it can read/write files in your repo).
+3. Copy the token and paste it into Streamlit secrets as shown above.
+
+If these secrets are NOT set, the app falls back to a local users.json
+file — this works fine when running locally on your own PC, but on
+Streamlit Cloud any accounts created will NOT survive a restart until
+you add the secrets above.
 ============================================================
+
+Usage:
+    streamlit run meraki_price_grid_v4.py
+
+Requires (same folder):
+    buymeraki_all_categories_enriched.csv
+    dragon_networks_products.csv
 """
 
 import os
@@ -103,9 +101,7 @@ def _gen_password(length=12):
 
 
 def _github_configured():
-    return hasattr(st, "secrets") and all(
-        k in st.secrets for k in ("GITHUB_TOKEN", "GITHUB_REPO", "GITHUB_USERS_PATH")
-    )
+    return all(k in st.secrets for k in ("GITHUB_TOKEN", "GITHUB_REPO", "GITHUB_USERS_PATH")) if hasattr(st, "secrets") else False
 
 
 def _github_headers():
@@ -129,10 +125,6 @@ def _default_users():
     }
 
 
-def _count_admins(users):
-    return sum(1 for u in users.values() if u.get("role") == "admin")
-
-
 def _load_users():
     if _github_configured():
         try:
@@ -148,7 +140,7 @@ def _load_users():
                 _save_users(users)
                 return users
         except Exception as e:
-            st.session_state["_storage_warning"] = f"Could not reach GitHub for user storage ({e}). Using local fallback."
+            st.warning(f"Could not reach GitHub for user storage ({e}). Using local fallback.")
 
     if not os.path.exists(USERS_FILE):
         users = _default_users()
@@ -178,9 +170,9 @@ def _save_users(users):
             if put_resp.status_code in (200, 201):
                 return
             else:
-                st.session_state["_storage_warning"] = "GitHub save failed; falling back to local file (changes may not persist)."
+                st.warning("GitHub save failed, falling back to local file (changes may not persist).")
         except Exception as e:
-            st.session_state["_storage_warning"] = f"GitHub save error ({e}); falling back to local file."
+            st.warning(f"GitHub save error ({e}), falling back to local file.")
 
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=2)
@@ -198,18 +190,16 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-    --bg-main: #f7f8fa;
-    --bg-panel: #ffffff;
-    --bg-panel-2: #f1f3f6;
-    --border-soft: #e2e5eb;
-    --text-primary: #1c2333;
-    --text-secondary: #6b7280;
-    --accent: #4f5fea;
-    --accent-dim: #dde0fb;
-    --accent-glow: rgba(79,95,234,0.12);
-    --warn-bg: #fff7e8;
-    --warn-border: #f0c374;
-    --warn-text: #92650c;
+    --bg-main: #0f1115;
+    --bg-panel: #161920;
+    --bg-panel-2: #1c2029;
+    --border-soft: #2a2e38;
+    --text-primary: #eceef2;
+    --text-secondary: #8b909c;
+    --accent: #3ecfb2;
+    --accent-dim: #23594c;
+    --accent-glow: rgba(62,207,178,0.15);
+    --warn: #e0a53e;
 }
 
 html, body, [class*="css"] { font-family: 'Inter', -apple-system, sans-serif; }
@@ -246,11 +236,10 @@ section[data-testid="stSidebar"] h2 {
 div[data-testid="stMetric"] {
     background: var(--bg-panel); border: 1px solid var(--border-soft);
     border-radius: 8px; padding: 16px 18px; position: relative; overflow: hidden;
-    box-shadow: 0 1px 2px rgba(16,24,40,0.04);
 }
 div[data-testid="stMetric"]::before {
     content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, var(--accent), transparent); opacity: 0.7;
+    background: linear-gradient(90deg, var(--accent), transparent); opacity: 0.6;
 }
 div[data-testid="stMetricValue"] {
     color: var(--text-primary) !important; font-family: 'IBM Plex Mono', monospace;
@@ -280,26 +269,24 @@ hr { border-color: var(--border-soft) !important; }
     border-radius: 8px; padding: 14px 18px; color: var(--text-secondary);
     font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
     display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 1px 2px rgba(16,24,40,0.04);
 }
 .status-dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent); margin-right: 6px; box-shadow: 0 0 6px var(--accent-glow);
 }
 .storage-warning {
-    background: var(--warn-bg); border: 1px solid var(--warn-border);
-    border-radius: 8px; padding: 10px 14px; color: var(--warn-text); font-size: 0.78rem;
+    background: rgba(224,165,62,0.08); border: 1px solid rgba(224,165,62,0.35);
+    border-radius: 8px; padding: 10px 14px; color: var(--warn); font-size: 0.78rem;
     margin-bottom: 14px;
 }
 [data-testid="stExpander"] { border: 1px solid var(--border-soft); background: var(--bg-panel); border-radius: 8px; }
 .stMultiSelect [data-baseweb="tag"] {
-    background-color: var(--accent-dim) !important; border: 1px solid var(--accent) !important;
+    background-color: var(--bg-panel-2) !important; border: 1px solid var(--accent-dim) !important;
     color: var(--text-primary) !important;
 }
 .login-card {
     max-width: 420px; margin: 50px auto 0 auto; background: var(--bg-panel);
     border: 1px solid var(--border-soft); border-radius: 10px; padding: 32px 28px;
-    box-shadow: 0 1px 3px rgba(16,24,40,0.06);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -307,11 +294,11 @@ hr { border-color: var(--border-soft) !important; }
 PLOT_TEMPLATE = go.layout.Template()
 PLOT_TEMPLATE.layout = dict(
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(255,255,255,0.0)",
-    font=dict(color="#1c2333", family="Inter"),
-    colorway=["#4f5fea", "#9aa0b4", "#7c88f2", "#c7cbe0", "#2f3675"],
-    xaxis=dict(gridcolor="rgba(28,35,51,0.08)", zerolinecolor="rgba(28,35,51,0.15)"),
-    yaxis=dict(gridcolor="rgba(28,35,51,0.08)", zerolinecolor="rgba(28,35,51,0.15)"),
+    plot_bgcolor="rgba(22,25,32,0.4)",
+    font=dict(color="#eceef2", family="Inter"),
+    colorway=["#3ecfb2", "#5a6072", "#7fe6d0", "#3a3f4b", "#23594c"],
+    xaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.1)"),
+    yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.1)"),
 )
 
 if "users" not in st.session_state:
@@ -426,8 +413,6 @@ def setup_security_questions_prompt():
         answers_filled = all(st.session_state.get(f"_pending_a_{i}", "").strip() for i in range(NUM_SECURITY_QUESTIONS))
         if not answers_filled:
             st.error("Please answer all questions.")
-        elif len(set(chosen)) < NUM_SECURITY_QUESTIONS:
-            st.error("Please choose different questions for each slot.")
         else:
             users = st.session_state.users
             uname = st.session_state.current_user
@@ -451,7 +436,7 @@ if not st.session_state.authenticated:
     st.markdown(
         '<div class="status-box">'
         '<span><span class="status-dot"></span>Secure access required</span>'
-        '<span style="color:#4f5fea;">LOCKED</span>'
+        '<span style="color:#3ecfb2;">LOCKED</span>'
         "</div>",
         unsafe_allow_html=True,
     )
@@ -459,7 +444,8 @@ if not st.session_state.authenticated:
         st.markdown(
             '<div class="storage-warning">'
             'Persistent account storage is not configured yet. New accounts created here '
-            'will not survive an app restart until GitHub-based storage secrets are added.'
+            'will not survive an app restart until GitHub-based storage secrets are added. '
+            'See the setup notes at the top of the source file.'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -543,29 +529,12 @@ def load_data():
 
 df, data_found, last_updated = load_data()
 
-if data_found:
-    inc_has_data = df["Price (Inc. GST)"].notna().any()
-    ex_has_data = df["Price (Ex. GST)"].notna().any()
-    if inc_has_data:
-        price_col = "Price (Inc. GST)"
-    elif ex_has_data:
-        price_col = "Price (Ex. GST)"
-    else:
-        price_col = "Price (Inc. GST)"
-else:
-    price_col = "Price (Inc. GST)"
-
 st.markdown("# Meraki Price Grid")
 last_updated_str = last_updated.strftime("%d %b %Y, %H:%M") if last_updated else "Unknown"
-
-storage_warning = st.session_state.pop("_storage_warning", None)
-if storage_warning:
-    st.markdown(f'<div class="storage-warning">{storage_warning}</div>', unsafe_allow_html=True)
-
 st.markdown(
     '<div class="status-box">'
     '<span><span class="status-dot"></span>Combined intel feed &mdash; BuyMeraki.com.au + Dragon-Networks.com.au</span>'
-    f'<span style="color:#4f5fea;">LIVE &middot; Data last updated {last_updated_str}</span>'
+    f'<span style="color:#3ecfb2;">LIVE &middot; Data last updated {last_updated_str}</span>'
     "</div>",
     unsafe_allow_html=True,
 )
@@ -631,18 +600,17 @@ with st.sidebar:
     st.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
 
 if st.session_state.current_role == "admin":
-    with st.sidebar.expander("Admin: Manage Users", expanded=False):
-        st.caption(f"Total users: {len(st.session_state.users)} | Admins: {_count_admins(st.session_state.users)}")
+    with st.sidebar.expander("Admin: Manage Users"):
         st.markdown("**Create new user**")
         new_username = st.text_input("New username", key="new_username")
-        auto_pw = st.checkbox("Auto-generate password", value=True, key="auto_pw_create")
+        auto_pw = st.checkbox("Auto-generate password", value=True)
         if auto_pw:
             new_password = _gen_password()
             st.text_input("Generated password", value=new_password, disabled=True, key="gen_pw_display")
         else:
             new_password = st.text_input("New password", type="password", key="new_password")
         new_role = st.selectbox("Role", ["viewer", "admin"], key="new_role")
-        if st.button("Create User", key="create_user_btn"):
+        if st.button("Create User"):
             if not new_username or not new_password:
                 st.warning("Username and password are required.")
             elif new_username in st.session_state.users:
@@ -663,25 +631,17 @@ if st.session_state.current_role == "admin":
 
         if selected_user:
             udata = st.session_state.users[selected_user]
-            is_last_admin = udata["role"] == "admin" and _count_admins(st.session_state.users) <= 1
             st.caption(f"Current role: {udata['role']} | Security questions set: {len(udata.get('security', []))}")
-            if is_last_admin:
-                st.info("This is the only remaining admin account, so role changes and deletion are disabled to prevent lockout.")
 
-            role_options = ["viewer", "admin"]
             new_role_for_user = st.selectbox(
-                "Change role", role_options,
-                index=role_options.index(udata["role"]),
+                "Change role", ["viewer", "admin"],
+                index=["viewer", "admin"].index(udata["role"]),
                 key=f"role_{selected_user}",
-                disabled=is_last_admin,
             )
-            if st.button("Update Role", key=f"update_role_{selected_user}", disabled=is_last_admin):
+            if st.button("Update Role", key=f"update_role_{selected_user}"):
                 st.session_state.users[selected_user]["role"] = new_role_for_user
                 _save_users(st.session_state.users)
-                if selected_user == st.session_state.current_user:
-                    st.session_state.current_role = new_role_for_user
                 st.success("Role updated.")
-                st.rerun()
 
             rename_to = st.text_input("Rename username to", key=f"rename_{selected_user}")
             if st.button("Update Username", key=f"update_username_{selected_user}"):
@@ -711,25 +671,12 @@ if st.session_state.current_role == "admin":
                     _save_users(st.session_state.users)
                     st.success(f"Password reset. New password: {reset_pw_value}")
 
-            st.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
-            st.markdown("**Delete user**")
-            if selected_user == st.session_state.current_user:
-                st.info("You cannot delete the account you are currently signed in with.")
-            elif is_last_admin:
-                st.info("Cannot delete the only remaining admin.")
-            else:
-                confirm_delete = st.text_input(
-                    f"Type '{selected_user}' to confirm deletion",
-                    key=f"confirm_delete_{selected_user}",
-                )
+            if selected_user != st.session_state.current_user:
                 if st.button("Delete User", key=f"delete_{selected_user}"):
-                    if confirm_delete != selected_user:
-                        st.error("Username confirmation does not match.")
-                    else:
-                        del st.session_state.users[selected_user]
-                        _save_users(st.session_state.users)
-                        st.success(f"User '{selected_user}' deleted.")
-                        st.rerun()
+                    del st.session_state.users[selected_user]
+                    _save_users(st.session_state.users)
+                    st.success(f"User '{selected_user}' deleted.")
+                    st.rerun()
     st.sidebar.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
 
 if not data_found:
@@ -761,11 +708,10 @@ sel_availability = st.sidebar.multiselect("Availability", availabilities, defaul
 search_term = st.sidebar.text_input("Search title / SKU", "")
 sale_only = st.sidebar.checkbox("On sale only", value=False)
 
+price_col = "Price (Inc. GST)" if df["Price (Inc. GST)"].notna().any() else "Price (Ex. GST)"
 valid_prices = df[price_col].dropna()
 if not valid_prices.empty:
     p_min, p_max = float(valid_prices.min()), float(valid_prices.max())
-    if p_min == p_max:
-        p_max = p_min + 1.0
     sel_price = st.sidebar.slider("Price range (AUD)", p_min, p_max, (p_min, p_max))
 else:
     sel_price = (0.0, 0.0)
@@ -807,8 +753,7 @@ c1.metric("Total SKUs", f"{len(filtered):,}")
 c2.metric("On Sale", f"{int(filtered['On Sale/Discount'].sum()):,}")
 avg_price = filtered[price_col].mean()
 c3.metric("Avg Price", f"${avg_price:,.2f}" if pd.notna(avg_price) else "\u2014")
-on_sale_subset = filtered.loc[filtered["On Sale/Discount"], "Discount %"] if "On Sale/Discount" in filtered.columns else pd.Series(dtype=float)
-avg_discount = on_sale_subset.mean() if not on_sale_subset.empty else np.nan
+avg_discount = filtered.loc[filtered["On Sale/Discount"], "Discount %"].mean()
 c4.metric("Avg Discount", f"{avg_discount:,.1f}%" if pd.notna(avg_discount) else "\u2014")
 c5.metric("Sources Live", f"{filtered['Source'].nunique()}")
 
@@ -840,8 +785,8 @@ with col_b:
     src_counts.columns = ["Source", "Count"]
     if not src_counts.empty:
         fig2 = px.pie(src_counts, names="Source", values="Count", hole=0.6, template=PLOT_TEMPLATE)
-        fig2.update_traces(textfont_color="#1c2333", marker=dict(line=dict(color="#ffffff", width=2)))
-        fig2.update_layout(height=460, margin=dict(l=10, r=10, t=10, b=10), legend=dict(font=dict(color="#1c2333")))
+        fig2.update_traces(textfont_color="#eceef2", marker=dict(line=dict(color="#0f1115", width=2)))
+        fig2.update_layout(height=460, margin=dict(l=10, r=10, t=10, b=10), legend=dict(font=dict(color="#eceef2")))
         st.plotly_chart(fig2, width="stretch")
 
 st.markdown("### Price Distribution")
@@ -872,7 +817,7 @@ else:
 st.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
 
 st.markdown("### Cross-Source Match: Same SKU, Different Vendor")
-if {"SKU", "MPN"}.issubset(filtered.columns) and filtered["Source"].nunique() > 1:
+if {"SKU", "MPN"}.issubset(filtered.columns):
     key_series = filtered["SKU"].fillna(filtered["MPN"]).astype(str).str.upper().str.strip()
     tmp = filtered.assign(_key=key_series)
     tmp = tmp[tmp["_key"].notna() & (tmp["_key"] != "NAN") & (tmp["_key"] != "")]
@@ -890,7 +835,7 @@ if {"SKU", "MPN"}.issubset(filtered.columns) and filtered["Source"].nunique() > 
     else:
         st.info("No overlapping SKUs found between sources in the current filter.")
 else:
-    st.info("Select more than one source to compare matching SKUs across vendors.")
+    st.info("SKU/MPN columns not available for cross-matching.")
 
 st.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
 
