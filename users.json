@@ -17,7 +17,7 @@
       }
     ]
   },
-  "user": {
+  "user2": {
     "password_hash": "$2b$12$BgVtPhscIU07QlWw5/29I.vHaaA97Sj46julD4gt9VQmaNC7lxy3K",
     "role": "viewer",
     "security": [
