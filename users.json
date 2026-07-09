@@ -20,6 +20,19 @@
   "user": {
     "password_hash": "$2b$12$BgVtPhscIU07QlWw5/29I.vHaaA97Sj46julD4gt9VQmaNC7lxy3K",
     "role": "viewer",
-    "security": []
+    "security": [
+      {
+        "question": "What was the name of your first pet?",
+        "answer_hash": "$2b$12$n7RlYWaQBJjqvZiSTu3lrODRH2sRfH81XIrtpvpPpvO851Gvk8Ciu"
+      },
+      {
+        "question": "What city were you born in?",
+        "answer_hash": "$2b$12$x6fk4MxLHfgUoMfytJok2O9793utZig1b4MRQ3CKFHqGkbIpk7zRS"
+      },
+      {
+        "question": "What is your mother's maiden name?",
+        "answer_hash": "$2b$12$bMhe4nTqXVI96E0jGkTogeSPVBJ2Mi2.7HGmrxD81Wc2qgjB0I9h."
+      }
+    ]
   }
 }
