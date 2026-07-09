@@ -39,5 +39,10 @@
     "password_hash": "$2b$12$Hwa57OkC4xd7x4fjVCdSb.MfVCpnMfSy84kAnKJnCVx9WastOu31y",
     "role": "admin",
     "security": []
+  },
+  "user": {
+    "password_hash": "$2b$12$U0hQ12cchI6iGAfMkApc7Oe7P27MksVu5CpTpthDlRKxaF2OkVj/S",
+    "role": "viewer",
+    "security": []
   }
 }
