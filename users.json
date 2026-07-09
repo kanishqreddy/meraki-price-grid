@@ -1,6 +1,6 @@
 {
   "admin": {
-    "password_hash": "$2b$12$pTsL3c37NXZ2aajbxQWk8us5K2AGK7Cw18i5q5Caix8BBNyPGHTay",
+    "password_hash": "$2b$12$y2OdScsW/vd75.qYmBiw8OKvi5AXHB5wohdldfNC6iCoCCz2xNfby",
     "role": "admin",
     "security": [
       {
